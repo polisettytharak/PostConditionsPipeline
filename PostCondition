@@ -1,0 +1,49 @@
+pipeine
+{
+	agent any
+	stages
+	{
+		stage('ContinuousDownload')
+		{
+			steps
+			{
+				git 'https://github.com/intelliqittrainings/maven.git'
+			}
+		}
+		stage('ContinuousBuild')
+		{
+			steps
+			{
+				sh label: '', script: 'mvn package'
+			}
+		}
+		stage('ContinuousDeployment')
+		{
+			steps
+			{
+				sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/pipeline/webapp/target/webapp.war ubuntu@172.31.59.98:/var/lib/tomcat8/webapps/testapp.war'
+			}
+		}
+		stage('ContinuousTesting')
+		{
+			steps
+			{
+				git 'https://github.com:selenium-saikrishna/FunctionalTesting.git'
+				sh label: '', script: 'java -jar /home/ubuntu/.jenkins/workspace/Scripted Pipeline/webapp/jesting.jar'
+			}
+		}
+	}
+	post
+	{
+		success
+		{
+			sh label: '', script: 'scp /home/ubuntu/.jenkins/workspace/pipeline/webapp/target/webapp.war ubuntu@172.31.60.23:/var/lib/tomcat8/webapps/prodapp.war'
+		}
+		failure
+		{
+			mail bcc: ' ', body:'Jenkins has failed in one of the CI-CD stages',
+			cc: '', from: ' ',replyTo:' ', subject: 'CI-CD failed',
+			to: 'ptharak@gmial.com'
+		}
+	}
+}
